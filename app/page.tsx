@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { formatMoney, mesNombre, getMesActual, periodoAnterior, periodoSiguiente } from '@/lib/utils';
 import type { Gasto, Ingreso } from '@/lib/types';
@@ -86,6 +87,13 @@ export default function Dashboard() {
               <span className="material-symbols-outlined text-sm">chevron_right</span>
             </button>
           </div>
+          <Link
+            href="/gastos?nuevo=1"
+            className="bg-primary text-white px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-on-primary-fixed-variant transition-colors active:scale-95 shadow-level-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span className="hidden sm:inline">Añadir gasto</span>
+          </Link>
         </header>
 
         {loading ? (

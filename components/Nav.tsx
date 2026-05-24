@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -11,12 +12,34 @@ const links = [
 
 export default function Nav() {
   const path = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <>
-      {/* Desktop sidebar */}
+      {/* Mobile Menu Toggle */}
+      <div className="md:hidden fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="text-secondary p-2 rounded-lg bg-surface-container-low shadow-level-2 border border-outline-variant active:scale-95 transition-transform"
+        >
+          <span className="material-symbols-outlined">{isOpen ? 'close' : 'menu'}</span>
+        </button>
+      </div>
+
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
       <nav
         aria-label="Main Navigation"
-        className="bg-surface-container-low h-full w-64 fixed left-0 top-0 flex flex-col py-8 px-6 gap-8 z-20 md:flex border-r border-outline-variant"
+        className={`bg-surface-container-low h-full w-64 fixed left-0 top-0 flex-col py-8 px-6 gap-8 z-40 md:flex border-r border-outline-variant transition-transform duration-300 ease-in-out ${
+          isOpen ? 'flex translate-x-0' : 'hidden md:translate-x-0 -translate-x-full md:flex'
+        }`}
       >
         {/* Brand Header */}
         <div className="mb-4">
@@ -27,13 +50,6 @@ export default function Nav() {
             Salud financiera para tu hogar
           </p>
         </div>
-        <Link
-          href="/gastos?nuevo=1"
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-on-background px-4 py-3 text-sm font-bold text-white shadow-level-2 transition-all hover:bg-inverse-surface active:scale-95"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          Añadir gasto
-        </Link>
         {/* Navigation Links */}
         <div className="flex-1 flex flex-col gap-4">
           {links.map(({ href, label, icon }) => {
@@ -42,6 +58,7 @@ export default function Nav() {
               <Link
                 key={href}
                 href={href}
+                onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-200 ease-in-out ${
                   active
                     ? 'text-primary font-bold border-r-4 border-primary bg-surface-container-high'
@@ -60,13 +77,6 @@ export default function Nav() {
           })}
         </div>
       </nav>
-
-      {/* Mobile Menu Toggle (Simplified for now) */}
-      <div className="md:hidden fixed top-4 left-4 z-40">
-        <button className="text-secondary p-2 rounded-lg bg-surface-container-low shadow-level-2 border border-outline-variant">
-          <span className="material-symbols-outlined">menu</span>
-        </button>
-      </div>
     </>
   );
 }
