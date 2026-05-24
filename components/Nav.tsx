@@ -27,6 +27,13 @@ export default function Nav() {
             Salud financiera para tu hogar
           </p>
         </div>
+        <Link
+          href="/gastos?nuevo=1"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-on-background px-4 py-3 text-sm font-bold text-white shadow-level-2 transition-all hover:bg-inverse-surface active:scale-95"
+        >
+          <span className="material-symbols-outlined text-[20px]">add</span>
+          Añadir gasto
+        </Link>
         {/* Navigation Links */}
         <div className="flex-1 flex flex-col gap-4">
           {links.map(({ href, label, icon }) => {

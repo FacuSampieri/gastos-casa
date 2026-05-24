@@ -1,21 +1,27 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
 import Modal from '@/components/Modal';
 import { formatMoney, mesNombre, getMesActual, periodoAnterior, periodoSiguiente } from '@/lib/utils';
 import type { Gasto, Categoria } from '@/lib/types';
 
 export default function GastosPage() {
+  const searchParams = useSearchParams();
+  const openNuevoFromUrl = searchParams.get('nuevo') === '1';
+
+  return <GastosContent key={searchParams.toString()} openNuevoFromUrl={openNuevoFromUrl} />;
+}
+
+function GastosContent({ openNuevoFromUrl }: { openNuevoFromUrl: boolean }) {
   const [periodo, setPeriodo] = useState(getMesActual());
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [filtro, setFiltro] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(openNuevoFromUrl);
   const [editando, setEditando] = useState<Gasto | null>(null);
   const [form, setForm] = useState({ categoria_id: '', descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0] });
-  
-  // Custom confirm state
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const cargar = useCallback(async () => {
@@ -48,22 +54,26 @@ export default function GastosPage() {
   };
 
   const guardar = async () => {
-    if (!form.monto || !form.categoria_id) return;
+    const categoriaId = form.categoria_id || categorias[0]?.id?.toString();
+    if (!form.monto || !categoriaId) return;
+
     setLoading(true);
     const d = new Date(form.fecha + 'T12:00:00');
     const payload = {
-      categoria_id: parseInt(form.categoria_id),
+      categoria_id: parseInt(categoriaId),
       descripcion: form.descripcion,
       monto: parseFloat(form.monto),
       fecha: form.fecha,
       mes: d.getMonth() + 1,
       anio: d.getFullYear(),
     };
+
     if (editando) {
       await fetch(`/api/gastos/${editando.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     } else {
       await fetch('/api/gastos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     }
+
     setModal(false);
     void cargar();
   };
@@ -86,7 +96,6 @@ export default function GastosPage() {
   return (
     <Layout>
       <div className="flex flex-col gap-8">
-        {/* Header Section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <button
@@ -120,7 +129,6 @@ export default function GastosPage() {
           </button>
         </div>
 
-        {/* Filters Section */}
         {categorias.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
             <button
@@ -150,7 +158,6 @@ export default function GastosPage() {
           </div>
         )}
 
-        {/* Summary Section */}
         <div className="flex justify-between items-end border-b border-surface-variant pb-4">
           <span className="text-xs font-bold text-secondary uppercase tracking-widest">
             TOTAL {filtro ? categorias.find(c => c.id === filtro)?.nombre : 'DEL MES'}
@@ -173,11 +180,7 @@ export default function GastosPage() {
                   className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-variant hover:border-primary-fixed-dim transition-colors group relative flex justify-between items-start"
                 >
                   <div className="flex items-start gap-4">
-                    {/* Category Indicator Dot */}
-                    <div
-                      className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: g.categoria_color || '#ccc' }}
-                    ></div>
+                    <div className="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: g.categoria_color || '#ccc' }}></div>
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-on-background mb-0.5">{g.categoria_nombre}</span>
                       {g.descripcion && (
@@ -214,17 +217,12 @@ export default function GastosPage() {
           </div>
         )}
 
-        {/* Form Modal */}
-        <Modal 
-          isOpen={modal} 
-          onClose={() => setModal(false)} 
-          title={editando ? 'Editar gasto' : 'Nuevo gasto'}
-        >
+        <Modal isOpen={modal} onClose={() => setModal(false)} title={editando ? 'Editar gasto' : 'Nuevo gasto'}>
           <div className="flex flex-col gap-5">
             <div>
               <label className="text-xs font-bold text-secondary uppercase tracking-wider mb-1.5 block">Categoría</label>
               <select
-                value={form.categoria_id}
+                value={form.categoria_id || categorias[0]?.id?.toString() || ''}
                 onChange={e => setForm(f => ({ ...f, categoria_id: e.target.value }))}
                 className="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-lowest outline-none focus:border-primary transition-colors font-semibold appearance-none"
               >
@@ -285,12 +283,7 @@ export default function GastosPage() {
           </div>
         </Modal>
 
-        {/* Confirmation Dialog */}
-        <Modal 
-          isOpen={confirmId !== null} 
-          onClose={() => setConfirmId(null)} 
-          title="¿Eliminar gasto?"
-        >
+        <Modal isOpen={confirmId !== null} onClose={() => setConfirmId(null)} title="¿Eliminar gasto?">
           <div className="flex flex-col gap-4">
             <p className="text-on-surface-variant font-medium">
               ¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.
