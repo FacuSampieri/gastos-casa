@@ -4,9 +4,11 @@ import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { formatMoney, mesNombre, getMesActual, periodoAnterior, periodoSiguiente } from '@/lib/utils';
 import type { Gasto, Ingreso } from '@/lib/types';
+import { ReceiptText, CalendarDays } from 'lucide-react';
 
 export default function Dashboard() {
   const [periodo, setPeriodo] = useState(getMesActual());
+  const [vista, setVista] = useState<'impacto' | 'ocurrencia'>('impacto');
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [ingreso, setIngreso] = useState<Ingreso | null>(null);
   const [editIngreso, setEditIngreso] = useState(false);
@@ -16,7 +18,7 @@ export default function Dashboard() {
   const cargar = useCallback(async () => {
     try {
       const [g, i] = await Promise.all([
-        fetch(`/api/gastos?mes=${periodo.mes}&anio=${periodo.anio}&vista=impacto`).then(r => r.json()),
+        fetch(`/api/gastos?mes=${periodo.mes}&anio=${periodo.anio}&vista=${vista}`).then(r => r.json()),
         fetch(`/api/ingresos?mes=${periodo.mes}&anio=${periodo.anio}`).then(r => r.json()),
       ]);
       setGastos(Array.isArray(g) ? g : []);
@@ -25,7 +27,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [periodo]);
+  }, [periodo, vista]);
 
   useEffect(() => {
     void cargar();
@@ -101,13 +103,48 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Main Header */}
-            <div>
-              <h2 className="text-3xl font-bold text-on-surface">
-                Resumen de {mesNombre(periodo.mes)}
-              </h2>
-              <p className="text-base text-secondary">
-                Tu estado financiero actual.
-              </p>
+            <div className="flex flex-col gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-on-surface">
+                  Resumen de {mesNombre(periodo.mes)}
+                </h2>
+                <p className="text-base text-secondary">
+                  Tu estado financiero actual.
+                </p>
+              </div>
+
+              {/* Selector de Vista */}
+              <div className="flex flex-col gap-2">
+                <div className="bg-surface-container-low p-1 rounded-2xl flex border border-outline-variant/30 max-w-md">
+                  <button
+                    onClick={() => setVista('impacto')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl font-bold text-xs transition-all ${
+                      vista === 'impacto'
+                        ? 'bg-on-background text-white shadow-sm'
+                        : 'text-secondary hover:bg-surface-container-high'
+                    }`}
+                  >
+                    <ReceiptText size={14} />
+                    Impacto en Bolsillo
+                  </button>
+                  <button
+                    onClick={() => setVista('ocurrencia')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl font-bold text-xs transition-all ${
+                      vista === 'ocurrencia'
+                        ? 'bg-on-background text-white shadow-sm'
+                        : 'text-secondary hover:bg-surface-container-high'
+                    }`}
+                  >
+                    <CalendarDays size={14} />
+                    Fecha de Compra
+                  </button>
+                </div>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-outline px-2">
+                  {vista === 'impacto' 
+                    ? `Gastos que pagás en ${mesNombre(periodo.mes)}` 
+                    : `Gastos realizados en ${mesNombre(periodo.mes)}`}
+                </p>
+              </div>
             </div>
 
             {/* Top Row: Income & Balance */}
@@ -229,6 +266,53 @@ export default function Dashboard() {
                         <div className="text-[10px] font-medium text-secondary">
                           {totalGastos > 0 ? ((c.total / totalGastos) * 100).toFixed(0) : 0}%
                         </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Lista detallada de gastos */}
+            {gastos.length > 0 && (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-xs font-semibold text-secondary tracking-widest uppercase">DETALLE DE GASTOS</span>
+                  <Link href="/gastos" className="text-xs font-bold text-primary hover:underline">Ver todos</Link>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {gastos.map(g => (
+                    <div
+                      key={g.id}
+                      className="bg-surface-container-lowest rounded-xl p-3 shadow-sm border border-surface-container-high flex justify-between items-center"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: g.categoria_color }}></div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-on-surface">{g.categoria_nombre}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-medium text-secondary line-clamp-1">{g.descripcion || 'Sin descripción'}</span>
+                            {/* Badge aclaratorio de ubicación */}
+                            {g.medio_pago === 'credito' && (
+                              <>
+                                {vista === 'impacto' && g.mes !== periodo.mes && (
+                                  <span className="text-[9px] font-black bg-secondary-container text-on-secondary-container px-1.5 rounded uppercase">
+                                    Comprado en {mesNombre(g.mes).slice(0,3)}
+                                  </span>
+                                )}
+                                {vista === 'ocurrencia' && g.mes_impacto !== periodo.mes && (
+                                  <span className="text-[9px] font-black bg-primary-fixed text-on-primary-fixed px-1.5 rounded uppercase">
+                                    Impacta en {mesNombre(g.mes_impacto).slice(0,3)}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-on-surface">{formatMoney(Number(g.monto))}</div>
+                        <div className="text-[9px] font-bold text-outline uppercase">{g.medio_pago}</div>
                       </div>
                     </div>
                   ))}
