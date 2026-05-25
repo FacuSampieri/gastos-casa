@@ -8,6 +8,7 @@ const links = [
   { href: '/gastos', label: 'Gastos', icon: 'payments' },
   { href: '/categorias', label: 'Categorías', icon: 'category' },
   { href: '/comparativa', label: 'Comparativa', icon: 'query_stats' },
+  { href: '/configuracion', label: 'Config', icon: 'settings' },
 ];
 
 export default function Nav() {

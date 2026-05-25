@@ -32,7 +32,11 @@ CREATE TABLE IF NOT EXISTS ingresos (
 
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_gastos_periodo ON gastos(mes, anio);
+CREATE INDEX IF NOT EXISTS idx_gastos_impacto ON gastos(mes_impacto, anio_impacto);
 CREATE INDEX IF NOT EXISTS idx_gastos_categoria ON gastos(categoria_id);
+
+-- Configuración inicial
+INSERT INTO config (clave, valor) VALUES ('dia_cierre_tarjeta', '22') ON CONFLICT DO NOTHING;
 
 -- Categorías iniciales típicas para Argentina
 INSERT INTO categorias (nombre, tipo, color, icono) VALUES
@@ -46,5 +50,8 @@ INSERT INTO categorias (nombre, tipo, color, icono) VALUES
   ('Ropa / Calzado', 'variable', '#DB7706', '👗'),
   ('Salidas / Restaurantes', 'variable', '#4F7942', '🍽️'),
   ('Entretenimiento', 'variable', '#6366F1', '🎬'),
+  ('Otros', 'variable', '#7A7469', '📦')
+ON CONFLICT DO NOTHING;
+'#6366F1', '🎬'),
   ('Otros', 'variable', '#7A7469', '📦')
 ON CONFLICT DO NOTHING;

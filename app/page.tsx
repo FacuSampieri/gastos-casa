@@ -16,7 +16,7 @@ export default function Dashboard() {
   const cargar = useCallback(async () => {
     try {
       const [g, i] = await Promise.all([
-        fetch(`/api/gastos?mes=${periodo.mes}&anio=${periodo.anio}`).then(r => r.json()),
+        fetch(`/api/gastos?mes=${periodo.mes}&anio=${periodo.anio}&vista=impacto`).then(r => r.json()),
         fetch(`/api/ingresos?mes=${periodo.mes}&anio=${periodo.anio}`).then(r => r.json()),
       ]);
       setGastos(Array.isArray(g) ? g : []);

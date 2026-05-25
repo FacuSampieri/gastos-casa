@@ -1,4 +1,5 @@
 export type TipoGasto = 'fijo' | 'variable';
+export type MedioPago = 'credito' | 'debito' | 'efectivo';
 
 export interface Categoria {
   id: number;
@@ -19,6 +20,12 @@ export interface Gasto {
   fecha: string;
   mes: number;
   anio: number;
+  medio_pago: MedioPago;
+  mes_impacto: number;
+  anio_impacto: number;
+  cuota_actual: number | null;
+  cuota_total: number | null;
+  cuota_grupo: string | null;
 }
 
 export interface Ingreso {
@@ -35,4 +42,8 @@ export interface ResumenMes {
   gastos_fijos: number;
   gastos_variables: number;
   balance: number;
+}
+
+export interface Config {
+  dia_cierre_tarjeta: number;
 }
